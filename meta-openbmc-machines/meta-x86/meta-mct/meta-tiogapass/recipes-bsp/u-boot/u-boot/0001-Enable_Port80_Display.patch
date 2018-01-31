@@ -1,0 +1,40 @@
+--- a/board/aspeed/ast-g5/ast-g5.c.old	2018-01-17 15:16:31.610416520 +0800
++++ b/board/aspeed/ast-g5/ast-g5.c	2018-01-17 15:16:58.490498058 +0800
+@@ -16,11 +16,36 @@
+ 
+ DECLARE_GLOBAL_DATA_PTR;
+ 
++/* winnie add start */
++/*--------------------------------------------------------------------
++ * @fn Enable_LPC_Port80_led
++ * @brief Enable LPC Port80 Pass through led function(GPIO H Group pin)
++ * Author  Winnie
++ *--------------------------------------------------------------------*/
++void Enable_LPC_Port80_led(void)
++{
++    *(volatile ulong *)(0x1E789090) = 0x80 ;        //SNPWADR: LPC Snoop Address #0 Register, set snooping address to 80h
++
++    *(volatile ulong *)(0x1E789080) &= ~(0x00000001);
++    *(volatile ulong *)(0x1E789080) |= 0x01 ;        //HICR5: Host Interface Control Register 5 [Enable snooping address #0]
++
++    *(volatile ulong *)(0x1E6E2090) &= ~0x40 ;       //SCU90: Multi-function Pin Control #5 D[7]=0  [disable UART6]
++    *(volatile ulong *)(0x1E780024) |= 0xFF000000 ;  //GPIO Direction Register for GPIOH output pin
++    *(volatile ulong *)(0x1E780068) |= 0x01000000 ;  //Extended GPIO Command Source 0[GPIOH for LPC]
++
++    *(volatile ulong *)(0x1E789080) &= ~(0xFF000000);
++    *(volatile ulong *)(0x1E789080) |= 0xC7000000 ;  //HICR5: Host Interface Control Register 5  D[31]=1,D[30]=1,D[29]=0,D[28:24] = 7
++    puts("Enable_LPC_Port80_led done\n");
++
++    //*(volatile ulong *)(0x1E789080) |= 0x20000000 ;  //HICR5: Host Interface Control Register 5  D[29]=1 (Inverse GPIO) //for E5540 platform
++}
++/* winnie add end */
++
+ int board_init(void)
+ {
+ 	gd->bd->bi_boot_params = CONFIG_SYS_SDRAM_BASE + 0x100;
+ 	gd->flags = 0;
+-
++	Enable_LPC_Port80_led(); //winnie add
+ 	return 0;
+ }
+ 
